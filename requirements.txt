@@ -1,0 +1,22 @@
+# Core dependencies
+numpy>=1.21.0
+scipy>=1.7.0
+opencv-python>=4.5.0
+mediapipe>=0.10.0
+scikit-learn>=1.0.0
+
+# Deep Learning
+torch>=2.0.0
+#torchvision>=0.15.0
+
+# Indexing and Search
+faiss-cpu>=1.7.0
+
+# Utils
+tqdm>=4.62.0
+pyyaml>=6.0
+pillow>=9.0.0
+
+# Optional (for advanced features)
+# torch-geometric>=2.3.0  # For GNN models
+# faiss-gpu>=1.7.0  # For GPU acceleration
