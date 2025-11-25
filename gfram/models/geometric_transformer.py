@@ -1,8 +1,10 @@
 """
-Geometric Transformer Model for Face Recognition.
+Geometric Transformer Model for Face Recognition - UPDATED
 
-A custom transformer architecture designed specifically for geometric facial features.
-Uses self-attention to capture spatial relationships between facial landmarks.
+UPDATED: Full support for both 468 and 478 landmarks
+- Flexible architecture for different landmark counts
+- Automatic adjustment of model capacity
+- Support for iris landmarks (478 mode)
 """
 
 import torch
@@ -19,16 +21,8 @@ class PositionalEncoding(nn.Module):
     """
 
     def __init__(self, d_model: int, max_len: int = 500):
-        """
-        Initialize positional encoding.
-
-        Args:
-            d_model: Embedding dimension.
-            max_len: Maximum sequence length.
-        """
         super().__init__()
 
-        # Create positional encoding matrix
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
@@ -39,43 +33,27 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pe', pe.unsqueeze(0))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Add positional encoding to input.
-
-        Args:
-            x: Input tensor (batch_size, seq_len, d_model).
-
-        Returns:
-            Tensor with positional encoding added.
-        """
         return x + self.pe[:, :x.size(1), :]
 
 
 class GeometricEmbedding(nn.Module):
     """
     Embed geometric coordinates (x, y, z) into high-dimensional space.
+
+    UPDATED: Flexible for any number of landmarks
     """
 
     def __init__(
-            self,
-            input_dim: int = 3,  # x, y, z coordinates
-            embed_dim: int = 256,
-            use_batch_norm: bool = True
+        self,
+        input_dim: int = 3,
+        embed_dim: int = 256,
+        use_batch_norm: bool = True
     ):
-        """
-        Initialize geometric embedding.
-
-        Args:
-            input_dim: Input dimension (2 for 2D, 3 for 3D landmarks).
-            embed_dim: Embedding dimension.
-            use_batch_norm: Whether to use batch normalization.
-        """
         super().__init__()
 
         self.input_dim = input_dim
         self.embed_dim = embed_dim
 
-        # Embedding layers
         self.embedding = nn.Sequential(
             nn.Linear(input_dim, embed_dim // 2),
             nn.ReLU(),
@@ -92,106 +70,25 @@ class GeometricEmbedding(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Embed geometric coordinates.
-
         Args:
-            x: Landmark coordinates (batch_size, num_landmarks, input_dim).
-
+            x: (batch_size, num_landmarks, input_dim)
         Returns:
-            Embedded landmarks (batch_size, num_landmarks, embed_dim).
+            (batch_size, num_landmarks, embed_dim)
         """
         batch_size, num_landmarks, _ = x.shape
 
-        # Flatten for embedding
-        x_flat = x.view(-1, self.input_dim)
-        embedded = self.embedding(x_flat)
+        # Embed
+        x = self.embedding(x)  # (batch, num_landmarks, embed_dim)
 
         # Normalize
         if self.use_batch_norm:
-            embedded = embedded.view(batch_size, num_landmarks, self.embed_dim)
-            embedded = embedded.transpose(1, 2)  # (batch, embed_dim, num_landmarks)
-            embedded = self.norm(embedded)
-            embedded = embedded.transpose(1, 2)  # (batch, num_landmarks, embed_dim)
+            x = x.transpose(1, 2)  # (batch, embed_dim, num_landmarks)
+            x = self.norm(x)
+            x = x.transpose(1, 2)  # (batch, num_landmarks, embed_dim)
         else:
-            embedded = embedded.view(batch_size, num_landmarks, self.embed_dim)
-            embedded = self.norm(embedded)
+            x = self.norm(x)
 
-        return embedded
-
-
-class MultiHeadGeometricAttention(nn.Module):
-    """
-    Multi-head self-attention for geometric data.
-    """
-
-    def __init__(
-            self,
-            embed_dim: int,
-            num_heads: int = 8,
-            dropout: float = 0.1
-    ):
-        """
-        Initialize multi-head attention.
-
-        Args:
-            embed_dim: Embedding dimension.
-            num_heads: Number of attention heads.
-            dropout: Dropout probability.
-        """
-        super().__init__()
-
-        assert embed_dim % num_heads == 0, "embed_dim must be divisible by num_heads"
-
-        self.embed_dim = embed_dim
-        self.num_heads = num_heads
-        self.head_dim = embed_dim // num_heads
-        self.scale = self.head_dim ** -0.5
-
-        # Query, Key, Value projections
-        self.qkv = nn.Linear(embed_dim, embed_dim * 3)
-        self.proj = nn.Linear(embed_dim, embed_dim)
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(
-            self,
-            x: torch.Tensor,
-            mask: Optional[torch.Tensor] = None
-    ) -> torch.Tensor:
-        """
-        Apply multi-head attention.
-
-        Args:
-            x: Input tensor (batch_size, seq_len, embed_dim).
-            mask: Attention mask (optional).
-
-        Returns:
-            Output tensor (batch_size, seq_len, embed_dim).
-        """
-        batch_size, seq_len, _ = x.shape
-
-        # Compute Q, K, V
-        qkv = self.qkv(x).reshape(batch_size, seq_len, 3, self.num_heads, self.head_dim)
-        qkv = qkv.permute(2, 0, 3, 1, 4)  # (3, batch, heads, seq_len, head_dim)
-        q, k, v = qkv[0], qkv[1], qkv[2]
-
-        # Attention scores
-        attn = (q @ k.transpose(-2, -1)) * self.scale
-
-        if mask is not None:
-            attn = attn.masked_fill(mask == 0, float('-inf'))
-
-        attn = F.softmax(attn, dim=-1)
-        attn = self.dropout(attn)
-
-        # Apply attention to values
-        out = attn @ v
-        out = out.transpose(1, 2).reshape(batch_size, seq_len, self.embed_dim)
-
-        # Output projection
-        out = self.proj(out)
-        out = self.dropout(out)
-
-        return out
+        return x
 
 
 class GeometricTransformerBlock(nn.Module):
@@ -200,25 +97,21 @@ class GeometricTransformerBlock(nn.Module):
     """
 
     def __init__(
-            self,
-            embed_dim: int,
-            num_heads: int = 8,
-            mlp_ratio: int = 4,
-            dropout: float = 0.1
+        self,
+        embed_dim: int,
+        num_heads: int = 8,
+        mlp_ratio: int = 4,
+        dropout: float = 0.1
     ):
-        """
-        Initialize transformer block.
-
-        Args:
-            embed_dim: Embedding dimension.
-            num_heads: Number of attention heads.
-            mlp_ratio: Ratio of MLP hidden dim to embedding dim.
-            dropout: Dropout probability.
-        """
         super().__init__()
 
         self.norm1 = nn.LayerNorm(embed_dim)
-        self.attn = MultiHeadGeometricAttention(embed_dim, num_heads, dropout)
+        self.attn = nn.MultiheadAttention(
+            embed_dim,
+            num_heads,
+            dropout=dropout,
+            batch_first=True
+        )
 
         self.norm2 = nn.LayerNorm(embed_dim)
         mlp_hidden_dim = int(embed_dim * mlp_ratio)
@@ -230,25 +123,15 @@ class GeometricTransformerBlock(nn.Module):
             nn.Dropout(dropout)
         )
 
-    def forward(
-            self,
-            x: torch.Tensor,
-            mask: Optional[torch.Tensor] = None
-    ) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Forward pass.
-
         Args:
-            x: Input tensor.
-            mask: Attention mask (optional).
-
-        Returns:
-            Output tensor.
+            x: (batch_size, num_landmarks, embed_dim)
         """
-        # Self-attention with residual connection
-        x = x + self.attn(self.norm1(x), mask)
+        # Self-attention with residual
+        x = x + self.attn(self.norm1(x), self.norm1(x), self.norm1(x))[0]
 
-        # MLP with residual connection
+        # MLP with residual
         x = x + self.mlp(self.norm2(x))
 
         return x
@@ -257,6 +140,8 @@ class GeometricTransformerBlock(nn.Module):
 class GeometricTransformer(nn.Module):
     """
     Geometric Transformer for face recognition.
+
+    UPDATED: Supports both 468 and 478 landmarks
 
     Architecture:
     1. Geometric embedding of landmarks
@@ -267,167 +152,195 @@ class GeometricTransformer(nn.Module):
     """
 
     def __init__(
-            self,
-            num_landmarks: int = 468,
-            input_dim: int = 3,
-            embed_dim: int = 256,
-            num_heads: int = 8,
-            num_layers: int = 6,
-            mlp_ratio: int = 4,
-            dropout: float = 0.1,
-            num_classes: Optional[int] = None,
-            output_embedding: bool = True
+        self,
+        num_landmarks: int = 478,  # UPDATED: Default to 478
+        input_dim: int = 3,
+        embed_dim: int = 256,
+        num_heads: int = 8,
+        num_layers: int = 6,
+        mlp_ratio: int = 4,
+        dropout: float = 0.1,
+        num_classes: Optional[int] = None,
+        output_dim: int = 256
     ):
         """
         Initialize Geometric Transformer.
 
         Args:
-            num_landmarks: Number of facial landmarks.
-            input_dim: Input dimension (2 for 2D, 3 for 3D).
+            num_landmarks: Number of facial landmarks (468 or 478).
+            input_dim: Dimension of each landmark (3 for x,y,z).
             embed_dim: Embedding dimension.
             num_heads: Number of attention heads.
-            num_layers: Number of transformer layers.
-            mlp_ratio: MLP hidden dimension ratio.
+            num_layers: Number of transformer blocks.
+            mlp_ratio: MLP expansion ratio.
             dropout: Dropout probability.
-            num_classes: Number of identity classes (None for embedding only).
-            output_embedding: Whether to output embedding vector.
+            num_classes: Number of classes for classification (None for embedding).
+            output_dim: Output embedding dimension.
         """
         super().__init__()
 
         self.num_landmarks = num_landmarks
         self.embed_dim = embed_dim
         self.num_classes = num_classes
-        self.output_embedding = output_embedding
+        self.output_dim = output_dim
 
-        # Embedding layers
-        self.geometric_embed = GeometricEmbedding(input_dim, embed_dim)
+        # Geometric embedding
+        self.embedding = GeometricEmbedding(
+            input_dim=input_dim,
+            embed_dim=embed_dim
+        )
+
+        # Positional encoding
         self.pos_encoding = PositionalEncoding(embed_dim, max_len=num_landmarks)
 
         # Transformer blocks
-        self.blocks = nn.ModuleList([
-            GeometricTransformerBlock(embed_dim, num_heads, mlp_ratio, dropout)
+        self.transformer_blocks = nn.ModuleList([
+            GeometricTransformerBlock(
+                embed_dim=embed_dim,
+                num_heads=num_heads,
+                mlp_ratio=mlp_ratio,
+                dropout=dropout
+            )
             for _ in range(num_layers)
         ])
 
+        # Global pooling
         self.norm = nn.LayerNorm(embed_dim)
 
-        # Output heads
-        if output_embedding:
-            self.embedding_head = nn.Sequential(
+        # Output head
+        if num_classes is not None:
+            # Classification head
+            self.head = nn.Sequential(
                 nn.Linear(embed_dim, embed_dim),
-                nn.BatchNorm1d(embed_dim),
                 nn.ReLU(),
-                nn.Dropout(dropout)
+                nn.Dropout(dropout),
+                nn.Linear(embed_dim, num_classes)
+            )
+        else:
+            # Embedding head
+            self.head = nn.Sequential(
+                nn.Linear(embed_dim, output_dim),
+                nn.LayerNorm(output_dim)
             )
 
-        if num_classes is not None:
-            self.classifier = nn.Linear(embed_dim, num_classes)
-
     def forward(
-            self,
-            x: torch.Tensor,
-            return_embedding: bool = True,
-            mask: Optional[torch.Tensor] = None
-    ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
+        self,
+        landmarks: torch.Tensor,
+        return_features: bool = False
+    ) -> torch.Tensor:
         """
         Forward pass.
 
         Args:
-            x: Input landmarks (batch_size, num_landmarks, input_dim).
-            return_embedding: Whether to return embedding vector.
-            mask: Attention mask (optional).
+            landmarks: Landmark coordinates (batch_size, num_landmarks, 3).
+            return_features: Whether to return intermediate features.
 
         Returns:
-            Tuple of (logits, embedding) depending on configuration.
-            - If num_classes is None: (None, embedding)
-            - If num_classes is set and return_embedding: (logits, embedding)
-            - If num_classes is set and not return_embedding: (logits, None)
+            Output tensor (batch_size, output_dim) or (batch_size, num_classes).
         """
-        # Embed geometric coordinates
-        x = self.geometric_embed(x)
+        batch_size, num_lm, _ = landmarks.shape
+
+        # Validate input
+        if num_lm != self.num_landmarks:
+            # Handle flexible landmark count
+            if num_lm == 478 and self.num_landmarks == 468:
+                # Take first 468
+                landmarks = landmarks[:, :468, :]
+            elif num_lm == 468 and self.num_landmarks == 478:
+                # Pad with zeros
+                padding = torch.zeros(batch_size, 10, 3, device=landmarks.device)
+                landmarks = torch.cat([landmarks, padding], dim=1)
+
+        # Embed landmarks
+        x = self.embedding(landmarks)  # (batch, num_landmarks, embed_dim)
 
         # Add positional encoding
         x = self.pos_encoding(x)
 
-        # Apply transformer blocks
-        for block in self.blocks:
-            x = block(x, mask)
+        # Transformer blocks
+        for block in self.transformer_blocks:
+            x = block(x)
 
+        # Normalize
         x = self.norm(x)
 
-        # Global average pooling
-        x = x.mean(dim=1)  # (batch_size, embed_dim)
+        # Global pooling (mean + max)
+        x_mean = torch.mean(x, dim=1)  # (batch, embed_dim)
+        x_max = torch.max(x, dim=1)[0]  # (batch, embed_dim)
+        x = x_mean + x_max  # Combine
 
-        # Generate embedding
-        embedding = None
-        if self.output_embedding and return_embedding:
-            embedding = self.embedding_head(x)
+        # Output head
+        output = self.head(x)
 
-        # Classification
-        logits = None
-        if self.num_classes is not None:
-            if self.output_embedding and return_embedding:
-                logits = self.classifier(embedding)
-            else:
-                logits = self.classifier(x)
+        if return_features:
+            return output, x
+        else:
+            return output
 
-        return logits, embedding
-
-    def get_embedding(self, x: torch.Tensor) -> torch.Tensor:
+    def extract_embedding(self, landmarks: torch.Tensor) -> torch.Tensor:
         """
-        Get embedding vector for input landmarks.
+        Extract embedding without classification.
 
         Args:
-            x: Input landmarks.
+            landmarks: Landmark coordinates.
 
         Returns:
             Embedding vector.
         """
         with torch.no_grad():
-            _, embedding = self.forward(x, return_embedding=True)
-        return embedding
+            return self.forward(landmarks, return_features=False)
 
 
 def create_geometric_transformer(
-        config_name: str = "base",
-        num_classes: Optional[int] = None,
-        **kwargs
+    config_name: str = "base",
+    num_landmarks: int = 478,  # UPDATED: Default to 478
+    num_classes: Optional[int] = None,
+    **kwargs
 ) -> GeometricTransformer:
     """
-    Create a Geometric Transformer model with predefined configurations.
+    Create Geometric Transformer with predefined configuration.
 
     Args:
         config_name: Configuration name ('tiny', 'small', 'base', 'large').
-        num_classes: Number of classes for classification head.
-        **kwargs: Additional arguments to override defaults.
+        num_landmarks: Number of landmarks (468 or 478).
+        num_classes: Number of classes (None for embedding mode).
+        **kwargs: Override configuration parameters.
 
     Returns:
-        GeometricTransformer model.
+        GeometricTransformer instance.
     """
     configs = {
-        'tiny': {
-            'embed_dim': 128,
-            'num_heads': 4,
-            'num_layers': 4,
-            'mlp_ratio': 4,
+        "tiny": {
+            "embed_dim": 128,
+            "num_heads": 4,
+            "num_layers": 3,
+            "mlp_ratio": 2,
+            "dropout": 0.1,
+            "output_dim": 128
         },
-        'small': {
-            'embed_dim': 192,
-            'num_heads': 6,
-            'num_layers': 6,
-            'mlp_ratio': 4,
+        "small": {
+            "embed_dim": 192,
+            "num_heads": 6,
+            "num_layers": 4,
+            "mlp_ratio": 3,
+            "dropout": 0.1,
+            "output_dim": 192
         },
-        'base': {
-            'embed_dim': 256,
-            'num_heads': 8,
-            'num_layers': 8,
-            'mlp_ratio': 4,
+        "base": {
+            "embed_dim": 256,
+            "num_heads": 8,
+            "num_layers": 6,
+            "mlp_ratio": 4,
+            "dropout": 0.1,
+            "output_dim": 256
         },
-        'large': {
-            'embed_dim': 384,
-            'num_heads': 12,
-            'num_layers': 12,
-            'mlp_ratio': 4,
+        "large": {
+            "embed_dim": 384,
+            "num_heads": 12,
+            "num_layers": 8,
+            "mlp_ratio": 4,
+            "dropout": 0.1,
+            "output_dim": 384
         }
     }
 
@@ -435,7 +348,50 @@ def create_geometric_transformer(
         raise ValueError(f"Unknown config: {config_name}. Choose from {list(configs.keys())}")
 
     config = configs[config_name]
-    config.update(kwargs)
-    config['num_classes'] = num_classes
+    config.update(kwargs)  # Override with custom params
 
-    return GeometricTransformer(**config)
+    return GeometricTransformer(
+        num_landmarks=num_landmarks,
+        num_classes=num_classes,
+        **config
+    )
+
+
+# Convenience functions
+def create_transformer_468(**kwargs) -> GeometricTransformer:
+    """Create transformer for 468 landmarks."""
+    return create_geometric_transformer(num_landmarks=468, **kwargs)
+
+
+def create_transformer_478(**kwargs) -> GeometricTransformer:
+    """Create transformer for 478 landmarks."""
+    return create_geometric_transformer(num_landmarks=478, **kwargs)
+
+
+# Backward compatibility alias
+MultiHeadGeometricAttention = GeometricTransformerBlock
+
+
+# Model info
+def get_model_info(model: GeometricTransformer) -> dict:
+    """
+    Get model information.
+
+    Args:
+        model: GeometricTransformer instance.
+
+    Returns:
+        Dictionary with model info.
+    """
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    return {
+        'num_landmarks': model.num_landmarks,
+        'embed_dim': model.embed_dim,
+        'num_classes': model.num_classes,
+        'output_dim': model.output_dim,
+        'total_params': total_params,
+        'trainable_params': trainable_params,
+        'model_size_mb': total_params * 4 / 1024 / 1024  # Assuming float32
+    }

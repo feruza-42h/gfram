@@ -70,12 +70,12 @@ When releasing a new version:
 
 1. Update version in `gfram/version.py`:
 ```python
-__version__ = "2.0.1"
+__version__ = "2.1.0"
 ```
 
 2. Update `pyproject.toml`:
 ```toml
-version = "2.0.1"
+version = "2.1.0"
 ```
 
 3. Create a git tag:

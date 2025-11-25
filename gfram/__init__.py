@@ -21,6 +21,7 @@ from .detectors import FaceDetector, LandmarkNormalizer
 # Geometry
 from .geometry.features import GeometricFeatureExtractor
 
+
 # Models
 from .models import (
     GeometricTransformer,
@@ -32,6 +33,7 @@ from .models import (
     CosFaceLoss,
     CombinedLoss
 )
+from .api.online_recognizer import OnlineRecognizer
 
 # Matching
 from .matching import FaceIndex, DistanceMetrics
@@ -69,4 +71,6 @@ __all__ = [
 
     # High-level API
     'Recognizer',
+    'OnlineRecognizer',
+
 ]

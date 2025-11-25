@@ -3,7 +3,7 @@ GFRAM - Geometric Face Recognition and Matching
 Version information
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 __author__ = "Ortiqova F.S"
-__description__ = "Professional geometric face recognition library with AI-powered matching"
+__description__ = "Geometric Face Recognition with AI and Online Learning"
 __license__ = "MIT"

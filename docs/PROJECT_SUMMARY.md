@@ -5,7 +5,7 @@
 GFRAM (Geometric Face Recognition and Matching) v2.0 is a professional Python library for face recognition based on geometric features and custom AI models, developed as part of doctoral research.
 
 **Author**: Ortiqova F.S.  
-**Version**: 2.0.1  
+**Version**: 2.1.0  
 **License**: MIT  
 **Python**: 3.8+
 
@@ -273,4 +273,4 @@ MIT License - Free for research and commercial use
 
 **Status**: Ready for PyPI publication ✅  
 **Date**: November 2025  
-**Version**: 2.0.1
+**Version**: 2.1.0
