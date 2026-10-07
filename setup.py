@@ -48,23 +48,7 @@ setup(
     ],
     python_requires=">=3.10",
     install_requires=requirements,
-    extras_require={
-        "dev": [
-            "pytest>=7.0.0",
-            "pytest-cov>=3.0.0",
-            "black>=22.0.0",
-            "flake8>=4.0.0",
-            "mypy>=0.950",
-        ],
-        "gpu": [
-            "faiss-gpu>=1.7.0",
-        ],
-        "all": [
-            "pytest>=7.0.0",
-            "pytest-cov>=3.0.0",
-            "faiss-gpu>=1.7.0",
-        ],
-    },
+    # extras (dev) are declared in pyproject.toml
     include_package_data=True,
     zip_safe=False,
 )

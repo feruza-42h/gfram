@@ -206,7 +206,7 @@ tests/
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/feruza-42h/gfram/blob/main/CONTRIBUTING.md).
 
 ```bash
 pip install -e ".[dev]"
@@ -231,7 +231,7 @@ If you use the hybrid mode, also cite InsightFace / ArcFace (Deng et al., CVPR 2
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE). See [Licences](#-licences) for the appearance model.
+MIT License - see [LICENSE](https://github.com/feruza-42h/gfram/blob/main/LICENSE). See [Licences](#-licences) for the appearance model.
 
 ## 🙏 Acknowledgments
 

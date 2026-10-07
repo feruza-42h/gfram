@@ -60,21 +60,10 @@ dev = [
     "mypy>=0.950",
     "sphinx>=4.5.0",
 ]
-gpu = [
-    "faiss-gpu>=1.7.0",
-]
-geometric = [
-    "torch-geometric>=2.3.0",
-    "torch-scatter>=2.1.0",
-    "torch-sparse>=0.6.0",
-]
-all = [
-    "gfram[dev,gpu,geometric]",
-]
 
 [project.urls]
 Homepage = "https://github.com/feruza-42h/gfram"
-Documentation = "https://gfram.readthedocs.io"
+Documentation = "https://github.com/feruza-42h/gfram#readme"
 Repository = "https://github.com/feruza-42h/gfram"
 "Bug Tracker" = "https://github.com/feruza-42h/gfram/issues"
 
