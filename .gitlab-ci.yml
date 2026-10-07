@@ -21,8 +21,8 @@ test:linux:
     matrix:
       - PY: ["3.10", "3.11", "3.12", "3.13", "3.14"]
   before_script:
-    # OpenCV and MediaPipe need these system libraries on slim images
-    - apt-get update -qq && apt-get install -y -qq --no-install-recommends libgl1 libglib2.0-0 > /dev/null
+    # OpenCV and MediaPipe (EGL/GLES) need these system libraries on slim images
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends libgl1 libegl1 libgles2 libglib2.0-0 > /dev/null
     - python -m pip install --upgrade pip
     # CPU-only PyTorch keeps the job light
     - pip install torch --index-url https://download.pytorch.org/whl/cpu

@@ -62,6 +62,11 @@ On first use GFRAM downloads the appearance model (MobileFaceNet `w600k_mbf`, 13
 
 Requirements: Python 3.10–3.14, PyTorch 2.0+, MediaPipe 0.10+, ONNX Runtime, NumPy, SciPy, OpenCV (installed automatically).
 
+On Linux servers and Docker images MediaPipe also needs the system graphics libraries:
+```bash
+sudo apt-get install -y libegl1 libgles2 libgl1
+```
+
 ## 🚀 Quick Start
 
 ```python

@@ -111,3 +111,17 @@ class TestDetectorExports:
         
         assert hasattr(detectors, 'FaceDetector')
         assert hasattr(detectors, 'LandmarkNormalizer')
+
+
+class TestMissingSystemLibraries:
+    """A Linux machine without EGL/GLES gets an actionable message, not a bare OSError"""
+
+    def test_missing_egl_explains_fix(self, monkeypatch):
+        from gfram.detectors import FaceDetector
+
+        def no_egl(self):
+            raise OSError('libEGL.so.1: cannot open shared object file: No such file or directory')
+
+        monkeypatch.setattr(FaceDetector, '_create_landmarker', no_egl)
+        with pytest.raises(RuntimeError, match='apt-get install -y libegl1 libgles2'):
+            FaceDetector()

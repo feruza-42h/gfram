@@ -107,6 +107,18 @@ class FaceDetector:
         logger.info(f"  Landmark mode: {landmark_mode}")
 
     def _init_mediapipe(self):
+        """Initialize MediaPipe, turning a missing Linux graphics library into a clear message."""
+        try:
+            self._create_landmarker()
+        except OSError as e:
+            if any(lib in str(e) for lib in ('libEGL', 'libGLES', 'libGL')):
+                raise RuntimeError(
+                    f'MediaPipe needs the system graphics libraries EGL/GLES ({e}). '
+                    'On Debian/Ubuntu install them with: sudo apt-get install -y libegl1 libgles2 libgl1'
+                ) from e
+            raise
+
+    def _create_landmarker(self):
         """Initialize MediaPipe with version compatibility."""
         if MEDIAPIPE_SOLUTIONS:
             # Old API (mp.solutions)
