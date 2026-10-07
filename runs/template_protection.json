@@ -1,0 +1,99 @@
+{
+  "LFW blur_s4": {
+    "pairs": 5454,
+    "max_abs_prob_diff": 4.944664336314908e-07,
+    "decisions_changed": 0,
+    "accuracy_plain": 0.9851485148514851,
+    "accuracy_protected": 0.9851485148514851,
+    "unlinkability_auc": 0.511135528761286,
+    "revoked_genuine_accept_rate": 0.0007371913011426465,
+    "plain_genuine_accept_rate": 0.9767784740140066
+  },
+  "LFW clean": {
+    "pairs": 5991,
+    "max_abs_prob_diff": 5.092798383010688e-07,
+    "decisions_changed": 0,
+    "accuracy_plain": 0.9971624102820899,
+    "accuracy_protected": 0.9971624102820899,
+    "unlinkability_auc": 0.49298596881716666,
+    "revoked_genuine_accept_rate": 0.0,
+    "plain_genuine_accept_rate": 0.9956565319077848
+  },
+  "LFW dark": {
+    "pairs": 5971,
+    "max_abs_prob_diff": 5.311166617616436e-07,
+    "decisions_changed": 0,
+    "accuracy_plain": 0.9914587171328085,
+    "accuracy_protected": 0.9914587171328085,
+    "unlinkability_auc": 0.5033211386966399,
+    "revoked_genuine_accept_rate": 0.0013404825737265416,
+    "plain_genuine_accept_rate": 0.9959785522788204
+  },
+  "LFW jpeg_q5": {
+    "pairs": 5772,
+    "max_abs_prob_diff": 6.500846575496766e-07,
+    "decisions_changed": 0,
+    "accuracy_plain": 0.9773042273042273,
+    "accuracy_protected": 0.9773042273042273,
+    "unlinkability_auc": 0.4905069579222944,
+    "revoked_genuine_accept_rate": 0.0010391409767925182,
+    "plain_genuine_accept_rate": 0.9605126428818843
+  },
+  "LFW lowres_16px": {
+    "pairs": 5869,
+    "max_abs_prob_diff": 5.058333455432162e-07,
+    "decisions_changed": 0,
+    "accuracy_plain": 0.9894360197648663,
+    "accuracy_protected": 0.9894360197648663,
+    "unlinkability_auc": 0.5124067003637341,
+    "revoked_genuine_accept_rate": 0.0,
+    "plain_genuine_accept_rate": 0.9822343696617697
+  },
+  "LFW lowres_24px": {
+    "pairs": 5979,
+    "max_abs_prob_diff": 5.278886303639041e-07,
+    "decisions_changed": 0,
+    "accuracy_plain": 0.99581869877906,
+    "accuracy_protected": 0.99581869877906,
+    "unlinkability_auc": 0.4986974527766489,
+    "revoked_genuine_accept_rate": 0.00033478406427854036,
+    "plain_genuine_accept_rate": 0.9936391027787077
+  },
+  "LFW mask": {
+    "pairs": 5976,
+    "max_abs_prob_diff": 5.217024098280731e-07,
+    "decisions_changed": 0,
+    "accuracy_plain": 0.9948125836680054,
+    "accuracy_protected": 0.9948125836680054,
+    "unlinkability_auc": 0.4937199146563849,
+    "revoked_genuine_accept_rate": 0.0,
+    "plain_genuine_accept_rate": 0.9936391027787077
+  },
+  "LFW sunglasses": {
+    "pairs": 5983,
+    "max_abs_prob_diff": 5.179985657632891e-07,
+    "decisions_changed": 0,
+    "accuracy_plain": 0.9938158114658199,
+    "accuracy_protected": 0.9938158114658199,
+    "unlinkability_auc": 0.5015628439603221,
+    "revoked_genuine_accept_rate": 0.00033444816053511704,
+    "plain_genuine_accept_rate": 0.9899665551839465
+  },
+  "CPLFW": {
+    "pairs": 4161,
+    "max_abs_prob_diff": 5.478651797230505e-07,
+    "decisions_changed": 0,
+    "accuracy_plain": 0.9420812304734438,
+    "accuracy_protected": 0.9420812304734438,
+    "unlinkability_auc": 0.48635546904244964,
+    "revoked_genuine_accept_rate": 0.0004873294346978557,
+    "plain_genuine_accept_rate": 0.9283625730994152
+  },
+  "overhead": {
+    "protect_geo_and_app_us": 8.421708000241779,
+    "decrypt_landmarks_us": 4.387458997371141,
+    "key_setup_ms": 24.217000005592126,
+    "landmarks_bytes_plain": 5736,
+    "landmarks_bytes_encrypted": 5764
+  }
+}
