@@ -15,6 +15,7 @@ pyyaml>=6.0
 pillow>=9.0.0
 certifi
 onnxruntime>=1.15
+cryptography>=42
 
 # Optional (for advanced features)
 # torch-geometric>=2.3.0  # For GNN models

@@ -26,7 +26,7 @@ import torch
 
 logger = logging.getLogger(__name__)
 
-DB_FORMAT = 3
+DB_FORMAT = 4  # 4: protected templates (keyed rotation + encrypted landmarks)
 DEFAULT_DB_PATH = Path.home() / '.gfram' / 'database'
 DEFAULT_THRESHOLD = 0.5  # used only if the model package carries no calibrated threshold
 
@@ -37,7 +37,7 @@ class SimpleRecognizer:
     """
 
     def __init__(self, db_path: Optional[str] = None, threshold: Optional[float] = None,
-                 contribute: Optional[bool] = None):
+                 contribute: Optional[bool] = None, template_key: Optional[bytes] = None):
         """
         Args:
             db_path: Database directory (default ~/.gfram/database).
@@ -46,6 +46,8 @@ class SimpleRecognizer:
             contribute: Share enrolled face data with the GFRAM server. None (default)
                 follows the consent stored with gfram.set_contribution_consent();
                 True / False decide for this recognizer only.
+            template_key: 32-byte secret protecting the stored templates. Default: the
+                installation key in ~/.gfram/keys/template.key (created on first use).
         """
         self.device = torch.device('cpu')
         self.db_path = Path(db_path) if db_path else DEFAULT_DB_PATH
@@ -62,11 +64,13 @@ class SimpleRecognizer:
         self._persons: Dict[str, int] = {}
         self._next_id = 0
         self._sample_names: List[str] = []
-        self._sample_landmarks: List[np.ndarray] = []
-        self._sample_app: List[np.ndarray] = []      # appearance embedding per face
+        self._template_key = template_key
+        self._protector = None
+        self._sample_landmarks_enc: List[bytes] = []  # AES-GCM encrypted landmarks per face
+        self._sample_app: List[np.ndarray] = []      # protected appearance template per face
         self._sample_quality: List[Dict] = []        # app_norm, sharp per face
         self._appearance_model: Optional[str] = None
-        self._geo: Optional[np.ndarray] = None       # derived from landmarks, per model version
+        self._geo: Optional[np.ndarray] = None       # protected geometric templates, per model version
         self._pose: Optional[np.ndarray] = None
         self._geo_version: Optional[str] = None
         self._total_recognitions = 0
@@ -116,6 +120,40 @@ class SimpleRecognizer:
         thresholds = self.hybrid.fusion.thresholds if self.hybrid else self.embedder.thresholds
         return float(thresholds.get('best_accuracy', DEFAULT_THRESHOLD))
 
+    @property
+    def protector(self):
+        """Key-bound template protection (see gfram/security.py)."""
+        if self._protector is None:
+            self._protector = self._make_protector(None)
+        return self._protector
+
+    def _make_protector(self, fingerprint: Optional[str]):
+        """
+        Protector for the configured key. With a stored database fingerprint, also accept
+        the key kept aside by an interrupted rotation (template.key.new / .old) and restore it.
+        """
+        from ..security import TemplateProtector, default_key_path, load_or_create_key, write_key
+        if self._template_key is not None:
+            protector = TemplateProtector(self._template_key)
+            if fingerprint and protector.fingerprint != fingerprint:
+                raise RuntimeError('template_key does not match the key this database was protected with')
+            return protector
+
+        path = default_key_path()
+        protector = TemplateProtector(load_or_create_key(path))
+        if not fingerprint or protector.fingerprint == fingerprint:
+            return protector
+        for alt in (path.with_suffix('.key.new'), path.with_suffix('.key.old')):
+            if alt.exists():
+                candidate = TemplateProtector(load_or_create_key(alt))
+                if candidate.fingerprint == fingerprint:
+                    write_key(candidate._key, path)
+                    logger.warning(f'Restored the template key from {alt.name} after an interrupted rotation')
+                    return candidate
+        raise RuntimeError(
+            f'The database in {self.db_path} is protected with a different template key than '
+            f'{path}. Restore the original key file; without it the stored faces cannot be used.')
+
     # ------------------------------------------------------------------
     # Persistence
     # ------------------------------------------------------------------
@@ -134,14 +172,18 @@ class SimpleRecognizer:
             logger.warning(f"Could not load database: {e}")
             return
 
+        if data.get('format') == 3:
+            self._migrate_unprotected(data)
+            return
         if data.get('format') != DB_FORMAT:
             self._archive_legacy_database(data)
             return
 
+        self._protector = self._make_protector(data['key_fingerprint'])
         self._persons = data['persons']
         self._next_id = data['next_id']
         self._sample_names = data['sample_names']
-        self._sample_landmarks = list(data['sample_landmarks'])
+        self._sample_landmarks_enc = list(data['sample_landmarks_enc'])
         self._sample_app = list(data['sample_app'])
         self._sample_quality = list(data['sample_quality'])
         self._appearance_model = data.get('appearance_model')
@@ -150,6 +192,23 @@ class SimpleRecognizer:
         self._geo_version = data.get('geo_version')
         self._total_recognitions = data.get('total_recognitions', 0)
         logger.info(f"✅ Database loaded: {len(self._persons)} persons, {len(self._sample_names)} faces")
+
+    def _migrate_unprotected(self, data: Dict):
+        """gfram 3.2.0 stored plain templates and landmarks: protect them in place, nobody is lost."""
+        p = self.protector
+        self._persons = data['persons']
+        self._next_id = data['next_id']
+        self._sample_names = data['sample_names']
+        self._sample_landmarks_enc = [p.encrypt_landmarks(lm) for lm in data['sample_landmarks']]
+        self._sample_app = [p.protect(a, 'app') for a in data['sample_app']]
+        self._sample_quality = list(data['sample_quality'])
+        self._appearance_model = data.get('appearance_model')
+        self._geo = p.protect(data['geo'], 'geo') if data.get('geo') is not None else None
+        self._pose = data.get('pose')
+        self._geo_version = data.get('geo_version')
+        self._total_recognitions = data.get('total_recognitions', 0)
+        self._save_database()
+        logger.info(f'Database upgraded to protected templates: {len(self._sample_names)} faces')
 
     def _archive_legacy_database(self, data: Dict):
         """
@@ -175,7 +234,8 @@ class SimpleRecognizer:
             'persons': self._persons,
             'next_id': self._next_id,
             'sample_names': self._sample_names,
-            'sample_landmarks': self._sample_landmarks,
+            'key_fingerprint': self.protector.fingerprint,
+            'sample_landmarks_enc': self._sample_landmarks_enc,
             'sample_app': self._sample_app,
             'sample_quality': self._sample_quality,
             'appearance_model': self._appearance_model,
@@ -191,7 +251,7 @@ class SimpleRecognizer:
 
     def _ensure_geometry(self):
         """Recompute geometric embeddings and poses if built with another geometry model version."""
-        n = len(self._sample_landmarks)
+        n = len(self._sample_landmarks_enc)
         if n == 0:
             self._geo, self._pose = None, None
             return
@@ -199,8 +259,8 @@ class SimpleRecognizer:
             return
         from ..models.hybrid import head_pose
         logger.info(f'Re-computing geometry of {n} faces with model {self.embedder.version}')
-        landmarks = np.stack(self._sample_landmarks)
-        self._geo = self.embedder.embed(landmarks)
+        landmarks = np.stack([self.protector.decrypt_landmarks(b) for b in self._sample_landmarks_enc])
+        self._geo = self.protector.protect(self.embedder.embed(landmarks), 'geo')
         self._pose = np.stack([head_pose(lm, self.embedder.reference) for lm in landmarks])
         self._geo_version = self.embedder.version
         self._save_database()
@@ -311,11 +371,13 @@ class SimpleRecognizer:
             self._persons[name] = self._next_id
             self._next_id += 1
         self._sample_names.append(name)
-        self._sample_landmarks.append(f['landmarks'])
-        self._sample_app.append(f['app'])
+        # Only protected forms are stored: encrypted landmarks, key-rotated templates
+        self._sample_landmarks_enc.append(self.protector.encrypt_landmarks(f['landmarks']))
+        self._sample_app.append(self.protector.protect(f['app'], 'app'))
         self._sample_quality.append({'app_norm': f['app_norm'], 'sharp': f['sharp']})
         self._appearance_model = self.hybrid.fusion.appearance_model
-        self._geo = f['geo'][None] if self._geo is None else np.vstack([self._geo, f['geo']])
+        geo = self.protector.protect(f['geo'], 'geo')
+        self._geo = geo[None] if self._geo is None else np.vstack([self._geo, geo])
         self._pose = f['pose'][None] if self._pose is None else np.vstack([self._pose, f['pose']])
         self._geo_version = self.embedder.version
         self._save_database()
@@ -340,7 +402,11 @@ class SimpleRecognizer:
             return {'name': 'Unknown', 'confidence': 0.0, 'recognized': False,
                     'error': 'No persons in database', 'bbox': f['bbox']}
 
-        scores = self._scores(f, self._gallery())
+        # Compare in the protected domain: rotations preserve every similarity exactly
+        query = dict(f, geo=self.protector.protect(f['geo'], 'geo'))
+        if 'app' in f:
+            query['app'] = self.protector.protect(f['app'], 'app')
+        scores = self._scores(query, self._gallery())
 
         # Best score per person (closest enrolled face)
         best = {}
@@ -374,6 +440,41 @@ class SimpleRecognizer:
         return {'same_person': confidence >= self.threshold, 'confidence': confidence,
                 'threshold': self.threshold}
 
+    def rotate_template_key(self) -> str:
+        """
+        Revoke the current templates: re-protect the whole database under a new random
+        key (no photos needed). Templates copied before the rotation no longer match.
+        Returns the new key fingerprint.
+        """
+        import secrets
+        from ..security import TemplateProtector, default_key_path, write_key
+        if self._template_key is not None:
+            raise RuntimeError('This recognizer uses a key you manage (template_key=...): rotate it in your '
+                               'key store and re-open the database with the new key')
+        old = self.protector
+        new = TemplateProtector(secrets.token_bytes(32))
+
+        landmarks = [old.decrypt_landmarks(b) for b in self._sample_landmarks_enc]
+        app = [new.protect(old.unprotect(a, 'app'), 'app') for a in self._sample_app]
+        geo = new.protect(old.unprotect(self._geo, 'geo'), 'geo') if self._geo is not None else None
+
+        path = default_key_path()
+        # Keep both keys on disk until the database is saved, so an interruption
+        # at any point leaves a key that matches the database (see _make_protector)
+        write_key(old._key, path.with_suffix('.key.old'))
+        write_key(new._key, path.with_suffix('.key.new'))
+
+        self._protector = new
+        self._sample_landmarks_enc = [new.encrypt_landmarks(lm) for lm in landmarks]
+        self._sample_app, self._geo = app, geo
+        self._save_database()
+
+        write_key(new._key, path)
+        path.with_suffix('.key.new').unlink()
+        path.with_suffix('.key.old').unlink()
+        logger.info(f'Template key rotated: {old.fingerprint} -> {new.fingerprint}')
+        return new.fingerprint
+
     def list_persons(self) -> List[str]:
         return list(self._persons.keys())
 
@@ -382,7 +483,7 @@ class SimpleRecognizer:
             return False
         keep = [i for i, n in enumerate(self._sample_names) if n != name]
         self._sample_names = [self._sample_names[i] for i in keep]
-        self._sample_landmarks = [self._sample_landmarks[i] for i in keep]
+        self._sample_landmarks_enc = [self._sample_landmarks_enc[i] for i in keep]
         self._sample_app = [self._sample_app[i] for i in keep]
         self._sample_quality = [self._sample_quality[i] for i in keep]
         if self._geo is not None:
@@ -397,7 +498,7 @@ class SimpleRecognizer:
         """Clear all persons"""
         self._persons.clear()
         self._next_id = 0
-        self._sample_names, self._sample_landmarks = [], []
+        self._sample_names, self._sample_landmarks_enc = [], []
         self._sample_app, self._sample_quality = [], []
         self._appearance_model = None
         self._geo, self._pose = None, None
@@ -414,4 +515,6 @@ class SimpleRecognizer:
             'db_path': str(self.db_path),
             'model_version': self._embedder.version if self._embedder else self._geo_version,
             'mode': ('hybrid' if self._hybrid else 'geometry') if self._embedder else None,
+            'template_protection': 'keyed rotation + AES-256-GCM landmarks',
+            'key_fingerprint': self.protector.fingerprint,
         }

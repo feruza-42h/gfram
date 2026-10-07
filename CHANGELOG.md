@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-10-07
+
+### Added
+- Protected, cancelable templates: embeddings stored only after secret keyed orthogonal
+  rotations, landmarks encrypted with AES-256-GCM; recognition results are exactly unchanged.
+- `gfram.rotate_template_key()` revokes all stored templates without photos; interrupted
+  rotations recover automatically. `SimpleRecognizer(template_key=...)` for external key stores.
+- `scripts/hybrid/template_protection.py`: score preservation, unlinkability and revocation experiment.
+
+### Changed
+- Database format 4. Databases from 3.2.0 are protected in place automatically; nobody is lost.
+- New dependency: `cryptography`.
+- `FaceIndex` uses numpy exact search; `faiss-cpu` is no longer a dependency (it aborted
+  processes on macOS when loaded next to PyTorch).
+- Linux needs `libegl1 libgles2 libgl1` for MediaPipe; `FaceDetector` now says so explicitly.
+
 ## [3.2.0] - 2026-10-07
 
 ### Added

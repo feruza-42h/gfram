@@ -19,7 +19,7 @@ if req_file.exists():
 
 setup(
     name="gfram",
-    version="3.2.0",
+    version="3.3.0",
     author="Ortiqova F.S.",
     author_email="feruzaortiqova42@gmail.com",
     description="Professional geometric face recognition library with AI-powered matching",

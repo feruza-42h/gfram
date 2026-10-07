@@ -15,6 +15,7 @@
 - **⚖️ Adaptive fusion**: a calibrated model weighs appearance, geometry, image quality and pose for each comparison and outputs a match probability
 - **⚡ CPU-friendly**: ~25 ms per face on a laptop CPU; 1.9 MB geometric model + 13 MB appearance model
 - **🔄 Update-safe database**: geometry is re-computed automatically when a new model arrives from gfram.uz
+- **🛡️ Protected templates**: stored templates are bound to a secret installation key (keyed rotations + AES-256-GCM); revocable with `gfram.rotate_template_key()`, with no change to recognition results
 - **🌐 Cross-platform**: Windows, macOS, Linux
 
 ## 📊 Results
@@ -147,7 +148,9 @@ Image
 
 ## 🔒 Privacy
 
-- Photos never leave the device. Appearance embeddings stay in the local database.
+- Photos never leave the device and are never stored.
+- **Protected templates.** The local database holds only key-protected templates: embeddings are rotated by secret orthogonal matrices derived from an installation key, and the 478 landmarks are encrypted with AES-256-GCM. Rotations preserve every similarity, so recognition results are exactly unchanged (0 decisions changed on 50,156 LFW/CPLFW pairs); templates protected under different keys cannot be linked (ROC AUC ≈ 0.5). The key lives in `~/.gfram/keys/template.key` (owner-only permissions, `GFRAM_KEY_DIR` to move it); keep a backup — without it the stored faces cannot be used.
+- `gfram.rotate_template_key()` revokes all stored templates by re-protecting the database under a new key, without photos. Copies taken before the rotation no longer match.
 - **Sharing with the server is opt-in.** Until you call `gfram.set_contribution_consent(True)`, nothing is sent and GFRAM prints a one-time notice. With consent, each `gfram.add()` sends the **person's name, 478 landmarks, geometric features, geometric and appearance embeddings, photo quality, head pose, model versions and a random installation id** (never the photo) to gfram.uz to improve the shared model. Make sure the people you enrol agree.
 - `gfram.set_contribution_consent(False)` stops sharing; `gfram.contribution_consent()` shows the current decision; `SimpleRecognizer(contribute=True/False)` overrides it for one recognizer. The server rejects contributions sent without consent.
 - Landmarks and embeddings are biometric data; treat them as sensitive.

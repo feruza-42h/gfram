@@ -176,6 +176,15 @@ def contribution_consent():
     return get_contribution_consent()
 
 
+def rotate_template_key():
+    """
+    Revoke the stored face templates: re-protect the local database under a new
+    secret key (no photos needed). Copies of the database taken before the rotation
+    can no longer be matched. Returns the new key fingerprint.
+    """
+    return _get_recognizer().rotate_template_key()
+
+
 def server_status():
     """
     Check server status.
@@ -206,5 +215,6 @@ __all__ = [
     'stats',
     'set_contribution_consent',
     'contribution_consent',
+    'rotate_template_key',
     'server_status',
 ]
