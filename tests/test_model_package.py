@@ -165,8 +165,8 @@ def recognizer(tmp_path, monkeypatch, face):
     monkeypatch.setattr(hybrid, 'AppearanceEmbedder', FakeAppearance)
     FakeAppearance.vector = np.eye(512, dtype=np.float32)[0]
 
-    def make():
-        r = SimpleRecognizer(db_path=str(tmp_path), contribute=False)
+    def make(contribute=False):
+        r = SimpleRecognizer(db_path=str(tmp_path), contribute=contribute)
         r._detect = lambda img: {'landmarks': face, 'bbox': (0, 0, 1, 1)}
         return r
     return make
@@ -225,3 +225,60 @@ def test_old_database_is_archived(tmp_path, recognizer):
     r = recognizer()
     assert r.list_persons() == []
     assert (tmp_path / 'legacy_v3.1' / 'persons.pkl').exists()
+
+
+# ---------------------------------------------------------------- contribution consent
+
+@pytest.fixture
+def sent(monkeypatch):
+    """Captures what would be sent to the GFRAM server."""
+    import gfram.cloud.consent as consent
+    import gfram.cloud.server_client as server_client
+    calls = []
+    monkeypatch.setattr(server_client, 'contribute', lambda **kw: calls.append(kw) or {'status': 'success'})
+    monkeypatch.setattr(consent, '_notice_shown', False)
+    return calls
+
+
+def test_nothing_is_sent_without_consent(recognizer, sent, capsys):
+    import gfram
+    assert gfram.contribution_consent() is None
+    r = recognizer(contribute=None)
+    r.add('alice', IMG)
+    r.add('bob', IMG)
+    assert sent == []
+    assert capsys.readouterr().out.count('set_contribution_consent(True)') == 1  # one notice only
+
+
+def test_consent_sends_full_record_but_no_photo(recognizer, sent):
+    import gfram
+    gfram.set_contribution_consent(True)
+    assert gfram.contribution_consent() is True
+    recognizer(contribute=None).add('alice', IMG)
+
+    assert len(sent) == 1
+    record, extra = sent[0], sent[0]['extra']
+    assert record['person_id'] == 'alice'
+    assert record['landmarks'].shape == (478, 3)
+    assert len(record['embedding']) == 128
+    assert len(extra['appearance_embedding']) == 512
+    assert extra['consent'] is True and extra['model_version'] == '3.2.0'
+    assert len(extra['installation_id']) == 32
+    sent_keys = set(record) | set(extra)
+    assert not sent_keys & {'image', 'photo', 'crop'}
+
+
+def test_explicit_choice_overrides_stored_consent(recognizer, sent):
+    import gfram
+    gfram.set_contribution_consent(True)
+    recognizer(contribute=False).add('alice', IMG)
+    assert sent == []
+
+    gfram.set_contribution_consent(False)
+    recognizer(contribute=None).add('alice', IMG)
+    assert sent == []
+
+
+def test_installation_id_is_stable():
+    from gfram.cloud.consent import installation_id
+    assert installation_id() == installation_id()

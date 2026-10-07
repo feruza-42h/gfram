@@ -7,7 +7,7 @@ Professional face recognition library.
 Simple usage:
     >>> import gfram
     >>> 
-    >>> # Add person (auto downloads model, sends data to server)
+    >>> # Add person (model ships with the package; data is shared only with consent)
     >>> gfram.add("John", "john.jpg")
     >>> 
     >>> # Recognize
@@ -47,7 +47,7 @@ def add(name: str, image):
     - Downloads model from server (first time)
     - Detects face and extracts features
     - Adds to local database
-    - Sends data to server for global model improvement
+    - With consent (gfram.set_contribution_consent), shares the face data with the server
     
     Args:
         name: Person's name
@@ -154,6 +154,28 @@ def stats():
     return _get_recognizer().stats()
 
 
+def set_contribution_consent(consent: bool):
+    """
+    Allow (True) or stop (False) sharing enrolled face data with the GFRAM server.
+
+    With consent, each gfram.add() sends the person's name, 478 face landmarks,
+    geometric features, geometric and appearance embeddings, photo quality and
+    head pose (never the photo) to https://gfram.uz to improve the shared model.
+    Make sure the people you enrol agree. The decision is remembered.
+    """
+    from .cloud.consent import set_contribution_consent as _set
+    _set(consent)
+
+
+def contribution_consent():
+    """
+    Current sharing decision: True, False, or None if not decided yet
+    (nothing is sent until consent is given).
+    """
+    from .cloud.consent import get_contribution_consent
+    return get_contribution_consent()
+
+
 def server_status():
     """
     Check server status.
@@ -182,5 +204,7 @@ __all__ = [
     'remove',
     'clear',
     'stats',
+    'set_contribution_consent',
+    'contribution_consent',
     'server_status',
 ]

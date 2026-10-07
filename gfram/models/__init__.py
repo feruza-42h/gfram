@@ -15,8 +15,10 @@ try:
         create_geometric_transformer,
         PositionalEncoding,
         GeometricEmbedding,
-        MultiHeadGeometricAttention,
-        GeometricTransformerBlock
+        GeometricTransformerBlock,
+        create_transformer_468,
+        create_transformer_478,
+        get_model_info,
     )
 
     __all__.extend([
@@ -24,8 +26,10 @@ try:
         'create_geometric_transformer',
         'PositionalEncoding',
         'GeometricEmbedding',
-        'MultiHeadGeometricAttention',
         'GeometricTransformerBlock',
+        'create_transformer_468',
+        'create_transformer_478',
+        'get_model_info',
     ])
 except ImportError as e:
     import warnings

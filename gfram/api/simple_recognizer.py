@@ -37,13 +37,15 @@ class SimpleRecognizer:
     """
 
     def __init__(self, db_path: Optional[str] = None, threshold: Optional[float] = None,
-                 contribute: bool = True):
+                 contribute: Optional[bool] = None):
         """
         Args:
             db_path: Database directory (default ~/.gfram/database).
             threshold: Match probability needed to accept a match. Defaults to the
                 threshold calibrated during training and stored in the model package.
-            contribute: Send enrolled face geometry to the GFRAM server.
+            contribute: Share enrolled face data with the GFRAM server. None (default)
+                follows the consent stored with gfram.set_contribution_consent();
+                True / False decide for this recognizer only.
         """
         self.device = torch.device('cpu')
         self.db_path = Path(db_path) if db_path else DEFAULT_DB_PATH
@@ -256,8 +258,10 @@ class SimpleRecognizer:
             return self.hybrid.fusion.probability(query, gallery)
         return gallery['geo'] @ query['geo']
 
-    def _send_to_server(self, name: str, landmarks: np.ndarray, embedding: np.ndarray):
+    def _send_to_server(self, name: str, f: Dict):
+        """Share one enrolled face (never the photo) with the GFRAM server."""
         try:
+            from ..cloud.consent import installation_id
             from ..cloud.server_client import contribute
             from ..detectors import LandmarkNormalizer
             from ..geometry.features import GeometricFeatureExtractor
@@ -267,9 +271,19 @@ class SimpleRecognizer:
             normalizer, extractor = self._extractor
             result = contribute(
                 person_id=name,
-                landmarks=landmarks,
-                geometric_features=extractor.extract(normalizer.normalize(landmarks)),
-                embedding=embedding,
+                landmarks=f['landmarks'],
+                geometric_features=extractor.extract(normalizer.normalize(f['landmarks'])),
+                embedding=f['geo'],
+                extra={
+                    'installation_id': installation_id(),
+                    'appearance_embedding': f['app'],
+                    'appearance_norm': f['app_norm'],
+                    'sharpness': f['sharp'],
+                    'pose': f['pose'],
+                    'model_version': self.embedder.version,
+                    'appearance_model': self.hybrid.fusion.appearance_model,
+                    'consent': True,
+                },
             )
             logger.debug(f"Server contribution: {result.get('status', 'unknown')}")
         except Exception as e:
@@ -306,8 +320,9 @@ class SimpleRecognizer:
         self._geo_version = self.embedder.version
         self._save_database()
 
-        if self.contribute:
-            self._send_to_server(name, f['landmarks'], f['geo'])
+        from ..cloud.consent import should_contribute
+        if should_contribute(self.contribute):
+            self._send_to_server(name, f)
 
         person_id = self._persons[name]
         logger.info(f"✅ Added: {name} (ID: {person_id})")

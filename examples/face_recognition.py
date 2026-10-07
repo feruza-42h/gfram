@@ -17,7 +17,8 @@ Usage:
 Options:
     --db DIR          database directory (default: ./gfram_example_db)
     --threshold T     match probability needed to accept a match (default: calibrated, ~0.53)
-    --contribute      also send enrolled faces to the GFRAM server (off by default here)
+    --contribute      share enrolled faces with the GFRAM server for this run
+                      (otherwise nothing is sent from this example)
 
 Requirements:
     pip install gfram

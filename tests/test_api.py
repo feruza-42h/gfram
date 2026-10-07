@@ -137,3 +137,14 @@ class TestExports:
         
         for name in gfram.__all__:
             assert hasattr(gfram, name), f"Missing export: {name}"
+
+
+class TestIsolation:
+    """Tests must never touch the user's real ~/.gfram (see conftest.isolated_gfram_home)"""
+
+    def test_default_database_is_temporary(self):
+        from pathlib import Path
+        from gfram.api.simple_recognizer import SimpleRecognizer
+
+        recognizer = SimpleRecognizer()
+        assert Path.home() / '.gfram' not in recognizer.db_path.parents

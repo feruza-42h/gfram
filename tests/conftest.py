@@ -24,6 +24,24 @@ except ImportError:
     HAS_FAISS = False
 
 
+@pytest.fixture(autouse=True)
+def isolated_gfram_home(tmp_path, monkeypatch):
+    """
+    Keep every test away from the user's real ~/.gfram and from gfram.uz:
+    a test that calls SimpleRecognizer() or recognizer.clear() must never touch
+    a real face database or model cache.
+    """
+    import gfram
+    import gfram.api.simple_recognizer as recognizer_module
+    import gfram.cloud.server_client as server_client
+
+    monkeypatch.setattr(recognizer_module, 'DEFAULT_DB_PATH', tmp_path / 'database')
+    monkeypatch.setenv('GFRAM_CACHE_DIR', str(tmp_path / 'cache'))
+    monkeypatch.setenv('GFRAM_SERVER_URL', 'http://127.0.0.1:9')  # nothing listens there
+    monkeypatch.setattr(server_client, '_client', None)
+    monkeypatch.setattr(gfram, '_recognizer', None)
+
+
 @pytest.fixture
 def sample_landmarks_478():
     """Generate sample 478 landmarks (3D)"""

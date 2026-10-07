@@ -145,7 +145,7 @@ class TestLossFunctions:
         """Test ArcFace loss can be imported"""
         from gfram.models.losses import ArcFaceLoss
         
-        loss_fn = ArcFaceLoss(in_features=256, out_features=100)
+        loss_fn = ArcFaceLoss(embedding_dim=256, num_classes=100)
         assert loss_fn is not None
     
     def test_triplet_loss_import(self):
@@ -159,13 +159,13 @@ class TestLossFunctions:
         """Test ArcFace loss forward pass"""
         from gfram.models.losses import ArcFaceLoss
         
-        loss_fn = ArcFaceLoss(in_features=256, out_features=10)
+        loss_fn = ArcFaceLoss(embedding_dim=256, num_classes=10)
         
         embeddings = torch.randn(4, 256)
         labels = torch.tensor([0, 1, 2, 3])
         
         output = loss_fn(embeddings, labels)
-        assert output is not None
+        assert torch.isfinite(output) and output.item() > 0
     
     def test_triplet_forward(self):
         """Test Triplet loss forward pass"""
@@ -173,11 +173,11 @@ class TestLossFunctions:
         
         loss_fn = TripletLoss(margin=0.2)
         
-        anchor = torch.randn(4, 256)
-        positive = torch.randn(4, 256)
-        negative = torch.randn(4, 256)
-        
-        loss = loss_fn(anchor, positive, negative)
+        # Batch-hard triplet loss: embeddings plus identity labels
+        embeddings = torch.randn(4, 256)
+        labels = torch.tensor([0, 0, 1, 1])
+
+        loss = loss_fn(embeddings, labels)
         
         assert loss is not None
         assert loss.item() >= 0

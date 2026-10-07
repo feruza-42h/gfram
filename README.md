@@ -1,6 +1,6 @@
 # GFRAM - Geometric Face Recognition and Matching
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI version](https://badge.fury.io/py/gfram.svg)](https://badge.fury.io/py/gfram)
 
@@ -60,7 +60,7 @@ pip install -e .
 
 On first use GFRAM downloads the appearance model (MobileFaceNet `w600k_mbf`, 13 MB, from the official InsightFace release, verified by SHA-256) into `~/.gfram/cache`.
 
-Requirements: Python 3.8+, PyTorch 2.0+, MediaPipe 0.10+, ONNX Runtime, NumPy, SciPy, OpenCV (installed automatically).
+Requirements: Python 3.10–3.14, PyTorch 2.0+, MediaPipe 0.10+, ONNX Runtime, NumPy, SciPy, OpenCV (installed automatically).
 
 ## 🚀 Quick Start
 
@@ -84,6 +84,8 @@ gfram.remove("jane")   # True
 gfram.stats()          # {'persons': 1, 'faces': 2, 'model_version': '3.2.0', 'mode': 'hybrid', ...}
 gfram.clear()          # delete the local database
 gfram.server_status()  # {'status': 'ok', ...}
+
+gfram.set_contribution_consent(True)   # opt in to sharing enrolled face data (see Privacy)
 ```
 
 `confidence` is the probability that the query face and the closest enrolled face belong to the same person (enrolled faces are stored as landmarks and embeddings, never as photos); a face is `recognized` when it reaches `threshold`. Unrecognised faces return `'name': 'Unknown'` while `best_candidate` still shows the closest person.
@@ -96,7 +98,7 @@ from gfram.api.simple_recognizer import SimpleRecognizer
 recognizer = SimpleRecognizer(
     db_path="my_db",      # default: ~/.gfram/database
     threshold=0.9,        # default: calibrated threshold stored in the model (0.526)
-    contribute=False,     # do not send enrolled face geometry to the server
+    contribute=False,     # never share enrolled faces, whatever the stored consent
 )
 ```
 
@@ -141,7 +143,8 @@ Image
 ## 🔒 Privacy
 
 - Photos never leave the device. Appearance embeddings stay in the local database.
-- With `contribute=True` (the default in `gfram.add`), each enrolled face sends the **person's name, its 478 landmarks, geometric features and geometric embedding** to gfram.uz to help improve the shared geometric model. Use `SimpleRecognizer(contribute=False)` to keep everything local.
+- **Sharing with the server is opt-in.** Until you call `gfram.set_contribution_consent(True)`, nothing is sent and GFRAM prints a one-time notice. With consent, each `gfram.add()` sends the **person's name, 478 landmarks, geometric features, geometric and appearance embeddings, photo quality, head pose, model versions and a random installation id** (never the photo) to gfram.uz to improve the shared model. Make sure the people you enrol agree.
+- `gfram.set_contribution_consent(False)` stops sharing; `gfram.contribution_consent()` shows the current decision; `SimpleRecognizer(contribute=True/False)` overrides it for one recognizer. The server rejects contributions sent without consent.
 - Landmarks and embeddings are biometric data; treat them as sensitive.
 
 ## 🔬 Reproducing the Results

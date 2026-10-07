@@ -16,6 +16,12 @@ from .server_client import (
     get_cache_dir
 )
 
+from .consent import (
+    get_contribution_consent,
+    set_contribution_consent,
+    installation_id,
+)
+
 from .model_loader import (
     ensure_model_available,
     get_model_path,
@@ -31,5 +37,8 @@ __all__ = [
     'get_cache_dir',
     'ensure_model_available',
     'get_model_path',
-    'clear_cache'
+    'clear_cache',
+    'get_contribution_consent',
+    'set_contribution_consent',
+    'installation_id',
 ]

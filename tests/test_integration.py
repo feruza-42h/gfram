@@ -14,7 +14,7 @@ class TestFullPipeline:
     def test_full_feature_extraction_pipeline(self, sample_landmarks_478):
         """Test full feature extraction pipeline"""
         from gfram.geometry.features import GeometricFeatureExtractor
-        from gfram.geometry.landmarks import LandmarkNormalizer
+        from gfram.detectors import LandmarkNormalizer
         
         # Normalize
         normalizer = LandmarkNormalizer()
@@ -31,7 +31,7 @@ class TestFullPipeline:
     def test_model_with_extracted_features(self, sample_landmarks_478):
         """Test model works with real landmarks"""
         from gfram.models import create_geometric_transformer
-        from gfram.geometry.landmarks import LandmarkNormalizer
+        from gfram.detectors import LandmarkNormalizer
         
         # Normalize landmarks
         normalizer = LandmarkNormalizer()
@@ -52,7 +52,7 @@ class TestFullPipeline:
     def test_hybrid_matching_pipeline(self, sample_landmarks_478):
         """Test hybrid matching with geometric and deep features"""
         from gfram.geometry.features import GeometricFeatureExtractor
-        from gfram.geometry.landmarks import LandmarkNormalizer
+        from gfram.detectors import LandmarkNormalizer
         from gfram.models import create_geometric_transformer
         from gfram.matching import FaceIndex
         
@@ -73,19 +73,19 @@ class TestFullPipeline:
             deep_embedding = model(landmarks_tensor).numpy().squeeze()
         
         # Create indices
-        geo_index = FaceIndex(metric='cosine')
-        deep_index = FaceIndex(metric='cosine')
+        geo_index = FaceIndex(dimension=len(geo_features), metric='cosine')
+        deep_index = FaceIndex(dimension=deep_embedding.shape[0], metric='cosine')
         
         # Add to indices
         metadata = {'name': 'test', 'person_id': 0}
-        geo_index.add(geo_features, metadata=metadata)
-        deep_index.add(deep_embedding, metadata=metadata)
+        geo_index.add('test', geo_features.astype(np.float32), metadata=metadata)
+        deep_index.add('test', deep_embedding.astype(np.float32), metadata=metadata)
         
         # Search
         geo_results = geo_index.search(geo_features, k=1)
         deep_results = deep_index.search(deep_embedding, k=1)
         
-        assert len(geo_results) > 0 or len(deep_results) > 0
+        assert geo_results[0]['name'] == 'test' and deep_results[0]['name'] == 'test'
 
 
 @pytest.mark.integration
@@ -98,11 +98,11 @@ class TestModelTraining:
         
         loss_fn = TripletLoss(margin=0.2)
         
-        anchor = torch.randn(8, 256)
-        positive = torch.randn(8, 256)
-        negative = torch.randn(8, 256)
-        
-        loss = loss_fn(anchor, positive, negative)
+        # Batch-hard triplet loss: embeddings plus identity labels (two per person)
+        embeddings = torch.randn(8, 256)
+        labels = torch.tensor([0, 0, 1, 1, 2, 2, 3, 3])
+
+        loss = loss_fn(embeddings, labels)
         
         assert loss.item() >= 0
         assert torch.isfinite(loss)

@@ -126,13 +126,13 @@ class TestLandmarkNormalizer:
     
     def test_normalizer_import(self):
         """Test LandmarkNormalizer can be imported"""
-        from gfram.geometry.landmarks import LandmarkNormalizer
+        from gfram.detectors import LandmarkNormalizer
         normalizer = LandmarkNormalizer()
         assert normalizer is not None
     
     def test_normalize_landmarks(self, sample_landmarks_478):
         """Test landmark normalization"""
-        from gfram.geometry.landmarks import LandmarkNormalizer
+        from gfram.detectors import LandmarkNormalizer
         
         normalizer = LandmarkNormalizer()
         normalized = normalizer.normalize(sample_landmarks_478)
@@ -146,15 +146,18 @@ class TestSymmetryFeatures:
     
     def test_symmetry_import(self):
         """Test symmetry module can be imported"""
-        from gfram.geometry.symmetry import compute_symmetry_features
-        assert compute_symmetry_features is not None
+        from gfram.geometry.symmetry import extract_symmetry_features, compute_bilateral_symmetry
+        assert extract_symmetry_features is not None
+        assert compute_bilateral_symmetry is not None
     
     def test_compute_symmetry(self, sample_landmarks_478):
         """Test symmetry computation"""
-        from gfram.geometry.symmetry import compute_symmetry_features
-        
-        features = compute_symmetry_features(sample_landmarks_478)
-        assert isinstance(features, (list, np.ndarray))
+        from gfram.geometry.symmetry import extract_symmetry_features, compute_bilateral_symmetry
+
+        features = extract_symmetry_features(sample_landmarks_478)
+        assert isinstance(features, np.ndarray)
+        assert np.all(np.isfinite(features))
+        assert np.isfinite(compute_bilateral_symmetry(sample_landmarks_478))
 
 
 class TestMoments:

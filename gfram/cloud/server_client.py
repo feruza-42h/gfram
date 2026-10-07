@@ -153,9 +153,10 @@ class GFRAMClient:
         person_id: str,
         landmarks: np.ndarray,
         geometric_features: np.ndarray,
-        embedding: Optional[np.ndarray] = None
+        embedding: Optional[np.ndarray] = None,
+        extra: Optional[Dict] = None
     ) -> Dict:
-        """Send data to server for training"""
+        """Send data to server for training (extra: additional JSON-serialisable fields)"""
         data = {
             "person_id": str(person_id),
             "landmarks": landmarks.tolist() if isinstance(landmarks, np.ndarray) else landmarks,
@@ -164,6 +165,8 @@ class GFRAMClient:
         
         if embedding is not None:
             data["embedding"] = embedding.tolist() if isinstance(embedding, np.ndarray) else embedding
+        for key, value in (extra or {}).items():
+            data[key] = value.tolist() if isinstance(value, np.ndarray) else value
         
         return self._request('/api/contribute', method='POST', data=json.dumps(data).encode('utf-8'))
 
@@ -192,10 +195,11 @@ def contribute(
     person_id: str,
     landmarks: np.ndarray,
     geometric_features: np.ndarray,
-    embedding: Optional[np.ndarray] = None
+    embedding: Optional[np.ndarray] = None,
+    extra: Optional[Dict] = None
 ) -> Dict:
     """Send data to server"""
-    return get_client().contribute(person_id, landmarks, geometric_features, embedding)
+    return get_client().contribute(person_id, landmarks, geometric_features, embedding, extra)
 
 
 def server_health() -> Dict:

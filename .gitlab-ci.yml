@@ -1,0 +1,47 @@
+# GFRAM CI: tests on Linux for every supported Python, plus Windows.
+# The appearance model is never downloaded here (tests fake it), and tests run
+# in temporary directories (tests/conftest.py), so no real ~/.gfram is touched.
+
+stages:
+  - test
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PIP_DEFAULT_TIMEOUT: "120"
+
+cache:
+  key: pip-$CI_JOB_NAME
+  paths:
+    - .cache/pip
+
+test:linux:
+  stage: test
+  image: python:${PY}-slim
+  parallel:
+    matrix:
+      - PY: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+  before_script:
+    # OpenCV and MediaPipe need these system libraries on slim images
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends libgl1 libglib2.0-0 > /dev/null
+    - python -m pip install --upgrade pip
+    # CPU-only PyTorch keeps the job light
+    - pip install torch --index-url https://download.pytorch.org/whl/cpu
+    - pip install -e . pytest
+  script:
+    - python -c "import gfram; print('gfram', gfram.__version__)"
+    - pytest tests -q
+
+# GitLab-hosted Windows runners; adjust the tag if your instance names them differently
+test:windows:
+  stage: test
+  tags:
+    - saas-windows-medium-amd64
+  before_script:
+    - choco install python312 -y --no-progress
+    - $env:Path = "C:\Python312;C:\Python312\Scripts;$env:Path"
+    - python -m pip install --upgrade pip
+    - pip install torch --index-url https://download.pytorch.org/whl/cpu
+    - pip install -e . pytest
+  script:
+    - python -c "import gfram; print('gfram', gfram.__version__)"
+    - pytest tests -q

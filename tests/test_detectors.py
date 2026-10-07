@@ -87,9 +87,10 @@ class TestLandmarkNormalizer:
         normalizer = LandmarkNormalizer()
         normalized = normalizer.normalize(sample_landmarks_478)
         
-        # Centroid should be close to origin
-        centroid = np.mean(normalized, axis=0)
+        # x and y are centred; z is only rescaled (depth keeps its offset)
+        centroid = np.mean(normalized[:, :2], axis=0)
         assert np.allclose(centroid, 0, atol=0.1)
+        assert np.abs(normalized).max() <= 1.0 + 1e-6
     
     def test_normalize_468(self, sample_landmarks_468):
         """Test normalization works with 468 landmarks"""
