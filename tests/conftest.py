@@ -17,11 +17,6 @@ try:
 except ImportError:
     HAS_TORCH = False
 
-try:
-    import faiss
-    HAS_FAISS = True
-except ImportError:
-    HAS_FAISS = False
 
 
 @pytest.fixture(autouse=True)

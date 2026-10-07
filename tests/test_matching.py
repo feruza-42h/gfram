@@ -106,6 +106,34 @@ class TestFaceIndex:
         assert len(results) == 0
 
 
+    def test_save_load_remove_roundtrip(self, tmp_path):
+        """Saved index reloads identically; remove drops one person only"""
+        from gfram.matching import FaceIndex
+
+        rng = np.random.default_rng(0)
+        index = FaceIndex(dimension=64)
+        a, b = rng.normal(size=(2, 64)), rng.normal(size=(3, 64))
+        index.add('alice', a, metadata={'person_id': 1})
+        index.add('bob', b, metadata={'person_id': 2})
+        index.save(tmp_path / 'idx')
+
+        loaded = FaceIndex.load(tmp_path / 'idx')
+        assert len(loaded) == 5
+        assert loaded.search(b[1], k=1)[0]['name'] == 'bob'
+
+        assert loaded.remove('alice') == 2
+        assert len(loaded) == 3 and set(loaded.name_to_ids) == {'bob'}
+        assert loaded.search(a[0], k=1)[0]['name'] == 'bob'
+
+    def test_euclidean_ranks_nearest_first(self):
+        from gfram.matching import FaceIndex
+
+        index = FaceIndex(dimension=2, metric='euclidean')
+        index.add('far', np.array([10.0, 10.0]))
+        index.add('near', np.array([1.0, 0.0]))
+        assert [r['name'] for r in index.search(np.array([0.0, 0.0]), k=2)] == ['near', 'far']
+
+
 class TestMatchingExports:
     """Test matching module exports"""
     
