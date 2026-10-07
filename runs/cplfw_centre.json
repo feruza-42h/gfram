@@ -1,0 +1,66 @@
+{
+  "w600k_mbf": {
+    "geometry only": {
+      "accuracy": 0.5105,
+      "auc": 0.526625,
+      "tar@far=1%": 0.015666666666666666
+    },
+    "appearance only": {
+      "accuracy": 0.611,
+      "auc": 0.652271,
+      "tar@far=1%": 0.033
+    },
+    "+ quality (QAF w/o geometry)": {
+      "accuracy": 0.6141666666666666,
+      "auc": 0.6570093333333333,
+      "tar@far=1%": 0.033666666666666664
+    },
+    "+ quality + pose": {
+      "accuracy": 0.6161666666666666,
+      "auc": 0.6665411111111111,
+      "tar@far=1%": 0.04833333333333333
+    },
+    "+ quality + geometry": {
+      "accuracy": 0.6115,
+      "auc": 0.6645653333333333,
+      "tar@far=1%": 0.046
+    },
+    "+ quality + pose + geometry (full)": {
+      "accuracy": 0.631,
+      "auc": 0.6780795555555555,
+      "tar@far=1%": 0.04733333333333333
+    }
+  },
+  "w600k_r50": {
+    "geometry only": {
+      "accuracy": 0.5105,
+      "auc": 0.526625,
+      "tar@far=1%": 0.015666666666666666
+    },
+    "appearance only": {
+      "accuracy": 0.6996666666666667,
+      "auc": 0.7631691111111111,
+      "tar@far=1%": 0.14733333333333334
+    },
+    "+ quality (QAF w/o geometry)": {
+      "accuracy": 0.6983333333333334,
+      "auc": 0.7660778888888888,
+      "tar@far=1%": 0.14833333333333334
+    },
+    "+ quality + pose": {
+      "accuracy": 0.6976666666666667,
+      "auc": 0.7723735555555555,
+      "tar@far=1%": 0.13566666666666666
+    },
+    "+ quality + geometry": {
+      "accuracy": 0.7053333333333334,
+      "auc": 0.7754897777777777,
+      "tar@far=1%": 0.15966666666666668
+    },
+    "+ quality + pose + geometry (full)": {
+      "accuracy": 0.7056666666666667,
+      "auc": 0.7816888888888889,
+      "tar@far=1%": 0.151
+    }
+  }
+}

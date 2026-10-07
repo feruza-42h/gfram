@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  gfram:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gfram:latest
+    container_name: gfram
+    volumes:
+      - gfram-cache:/app/cache
+      - ./data:/app/data:ro
+    environment:
+      - GFRAM_CACHE_DIR=/app/cache
+    restart: unless-stopped
+
+  # Development container with all dependencies
+  gfram-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: gfram:dev
+    container_name: gfram-dev
+    volumes:
+      - .:/app
+      - gfram-cache:/app/cache
+    environment:
+      - GFRAM_CACHE_DIR=/app/cache
+    command: bash
+
+  # API server (if needed)
+  gfram-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gfram:latest
+    container_name: gfram-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - gfram-cache:/app/cache
+    environment:
+      - GFRAM_CACHE_DIR=/app/cache
+    command: python -m gfram.api.server
+    restart: unless-stopped
+
+volumes:
+  gfram-cache:

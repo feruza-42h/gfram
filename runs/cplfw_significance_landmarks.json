@@ -1,0 +1,40 @@
+{
+  "w600k_mbf": {
+    "acc_without_geometry": 0.8488333333333333,
+    "acc_with_geometry": 0.8586666666666667,
+    "acc_gain_ci95": [
+      0.004662499999999933,
+      0.015166666666666662
+    ],
+    "tar1_without_geometry": 0.5103333333333333,
+    "tar1_with_geometry": 0.6213333333333333,
+    "tar1_gain_ci95": [
+      0.07287506320193743,
+      0.2071558300463946
+    ],
+    "mcnemar": {
+      "fixed_by_geometry": 163,
+      "broken_by_geometry": 104,
+      "p_value": 0.00036717789963680917
+    }
+  },
+  "w600k_r50": {
+    "acc_without_geometry": 0.8921666666666667,
+    "acc_with_geometry": 0.9003333333333333,
+    "acc_gain_ci95": [
+      0.003166666666666651,
+      0.013337499999999952
+    ],
+    "tar1_without_geometry": 0.6776666666666666,
+    "tar1_with_geometry": 0.7396666666666667,
+    "tar1_gain_ci95": [
+      0.030728100105981808,
+      0.09344881588999225
+    ],
+    "mcnemar": {
+      "fixed_by_geometry": 140,
+      "broken_by_geometry": 91,
+      "p_value": 0.0015319977195994536
+    }
+  }
+}

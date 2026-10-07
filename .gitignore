@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Datasets, landmark caches and downloaded models (several GB, re-created by scripts/)
+data/
+
+# Personal face photos: biometric data, never commit
+*.jpg
+*.jpeg
+*.png
+*.heic
+
+# Training checkpoints and logs; JSON results in runs/ stay tracked as evidence
+runs/**/*.pt
+*.log
+
+# Local face databases
+*.pkl
+gfram_example_db/
+
+# Model files are ignored everywhere except the bundled package model
+*.pth
+*.onnx
+!gfram/pretrained/gfram_model.pth
