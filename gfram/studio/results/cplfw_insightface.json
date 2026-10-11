@@ -1,0 +1,34 @@
+{
+  "w600k_r50": {
+    "geometry only": {
+      "accuracy": 0.5105,
+      "auc": 0.526625,
+      "tar@far=1%": 0.015666666666666666
+    },
+    "appearance only": {
+      "accuracy": 0.9575,
+      "auc": 0.9730921111111112,
+      "tar@far=1%": 0.928
+    },
+    "+ quality (QAF w/o geometry)": {
+      "accuracy": 0.961,
+      "auc": 0.9798335555555555,
+      "tar@far=1%": 0.9233333333333333
+    },
+    "+ quality + pose": {
+      "accuracy": 0.962,
+      "auc": 0.9808178888888889,
+      "tar@far=1%": 0.9296666666666666
+    },
+    "+ quality + geometry": {
+      "accuracy": 0.963,
+      "auc": 0.981461,
+      "tar@far=1%": 0.9303333333333333
+    },
+    "+ quality + pose + geometry (full)": {
+      "accuracy": 0.9628333333333333,
+      "auc": 0.9825194444444444,
+      "tar@far=1%": 0.934
+    }
+  }
+}

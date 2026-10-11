@@ -1,0 +1,42 @@
+{
+  "full QAF": [
+    0.9966616591553997,
+    0.9801607172663759
+  ],
+  "appearance score only": [
+    0.9934902353530295,
+    0.9765600782125569
+  ],
+  "without geometry identity (s_geo)": [
+    0.9964947421131698,
+    0.9799222643489042
+  ],
+  "without embedding norms": [
+    0.9928225671841096,
+    0.9774423540072013
+  ],
+  "without image sharpness/brightness": [
+    0.9964947421131698,
+    0.9792545961799842
+  ],
+  "without head-pose difference (from landmarks)": [
+    0.9968285761976298,
+    0.9798507284736628
+  ],
+  "appearance + geometry identity (s_geo) only": [
+    0.9938240694374896,
+    0.9772039010897297
+  ],
+  "appearance + embedding norms only": [
+    0.9968285761976298,
+    0.9799222643489042
+  ],
+  "appearance + image sharpness/brightness only": [
+    0.9943248205641796,
+    0.9769892934640055
+  ],
+  "appearance + head-pose difference (from landmarks) only": [
+    0.9931564012685695,
+    0.9774661992989485
+  ]
+}

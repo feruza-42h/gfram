@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-10-11
+
+### Added
+- GFRAM Studio desktop application (`pip install "gfram[studio]"`, start with `gfram-studio`):
+  live camera recognition, guided registration with person cards and management, 1:1 / 1:N,
+  storage audit proving no photos are kept, key-rotation demo, recognition journal,
+  version check and self-update (library, desktop and geometric model). Interface in Uzbek and Russian.
+- One-click installers for macOS and Windows in `desktop/installers/`.
+
+### Fixed
+- First run on a fresh macOS python.org install: the MediaPipe face landmarker download
+  failed with CERTIFICATE_VERIFY_FAILED; it now uses certifi and never leaves a truncated file.
+
 ## [3.3.0] - 2026-10-07
 
 ### Added

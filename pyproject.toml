@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gfram"
-version = "3.3.0"
+version = "3.4.0"
 authors = [
     {name = "Ortiqova F.S", email = "feruzaortiqova42@gmail.com"}
 ]
@@ -52,6 +52,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+studio = [
+    "PySide6-Essentials>=6.6",
+    "PySide6-Addons>=6.6",
+    "matplotlib>=3.7",
+]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=3.0.0",
@@ -60,6 +65,9 @@ dev = [
     "mypy>=0.950",
     "sphinx>=4.5.0",
 ]
+
+[project.gui-scripts]
+gfram-studio = "gfram.studio.app:main"
 
 [project.urls]
 Homepage = "https://github.com/feruza-42h/gfram"
@@ -73,7 +81,7 @@ include = ["gfram*"]
 exclude = ["tests*", "examples*", "docs*"]
 
 [tool.setuptools.package-data]
-gfram = ["pretrained/*.pth"]
+gfram = ["pretrained/*.pth", "studio/results/*.json"]
 
 [tool.black]
 line-length = 100

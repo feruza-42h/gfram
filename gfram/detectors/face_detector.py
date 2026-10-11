@@ -164,8 +164,12 @@ class FaceDetector:
         
         if not model_path.exists():
             logger.info(f"Downloading MediaPipe model to {model_path}")
-            urllib.request.urlretrieve(model_url, model_path)
-            
+            from ..cloud.server_client import _ssl_context  # certifi: python.org macOS builds have no CA store
+            tmp = model_path.with_suffix('.download')
+            with urllib.request.urlopen(model_url, timeout=120, context=_ssl_context()) as response:
+                tmp.write_bytes(response.read())
+            tmp.replace(model_path)  # never leave a truncated model behind
+
         return str(model_path)
 
     def detect(

@@ -1,0 +1,21 @@
+{
+  "w600k_r50": {
+    "acc_without_geometry": 0.961,
+    "acc_with_geometry": 0.9628333333333333,
+    "acc_gain_ci95": [
+      -0.0006666666666667043,
+      0.0043333333333333
+    ],
+    "tar1_without_geometry": 0.9233333333333333,
+    "tar1_with_geometry": 0.934,
+    "tar1_gain_ci95": [
+      0.0009963136823355674,
+      0.019555465145571542
+    ],
+    "mcnemar": {
+      "fixed_by_geometry": 33,
+      "broken_by_geometry": 22,
+      "p_value": 0.1770013647703581
+    }
+  }
+}
