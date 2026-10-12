@@ -68,6 +68,21 @@ On Linux servers and Docker images MediaPipe also needs the system graphics libr
 sudo apt-get install -y libegl1 libgles2 libgl1
 ```
 
+## 🖥️ GFRAM Studio (desktop)
+
+A desktop application ships with the library (Uzbek / Russian interface):
+
+```bash
+pip install "gfram[studio]"
+gfram-studio
+```
+
+Live camera recognition (478 landmarks, head pose, per-stage timings), guided registration with person
+cards and management, 1:1 verification with the fusion explained feature by feature, 1:N search,
+a storage audit proving that no photos are kept, template key rotation, a recognition journal and
+in-app updates (library, desktop and geometric model). One-click installers for macOS and Windows
+are in `desktop/installers/`.
+
 ## 🚀 Quick Start
 
 ```python
