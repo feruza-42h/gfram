@@ -249,9 +249,19 @@ def check_updates_in_background(win):
     run_task(work, lambda v: v and win.update_found(v), lambda e: None)
 
 
-def main():
+def _quiet_logs():
+    """Hide start-up chatter of MediaPipe / TensorFlow Lite / Qt / matplotlib (errors are still shown)."""
+    os.environ.setdefault('GLOG_minloglevel', '2')
+    os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '2')
+    os.environ.setdefault('QT_LOGGING_RULES', 'qt.qpa.fonts=false;qt.multimedia.ffmpeg=false;qt.multimedia=false')
     import logging
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.ERROR)
+    for name in ('matplotlib', 'matplotlib.font_manager', 'gfram'):
+        logging.getLogger(name).setLevel(logging.ERROR)
+
+
+def main():
+    _quiet_logs()
     from . import STUDIO_HOME
     # The studio keeps its own template key, so key-rotation demos never touch ~/.gfram/keys
     os.environ.setdefault('GFRAM_KEY_DIR', str(STUDIO_HOME / 'keys'))

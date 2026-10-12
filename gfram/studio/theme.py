@@ -13,10 +13,14 @@ BAD = '#ff5d6c'
 WARN = '#ffb547'
 FUSION = '#22c3c3'
 
+import sys
+
+FONT = {'darwin': "'Helvetica Neue'", 'win32': "'Segoe UI'"}.get(sys.platform, 'Arial')
+
 SERIES = [ACCENT, ACCENT2, FUSION, WARN, GOOD, BAD, '#8fa3bf']
 
 QSS = f"""
-* {{ font-family: 'Helvetica Neue', 'Segoe UI', Arial; font-size: 14px; color: {TEXT}; }}
+* {{ font-family: {FONT}; font-size: 14px; color: {TEXT}; }}
 QMainWindow, QWidget#page, QStackedWidget, QScrollArea, QScrollArea > QWidget > QWidget {{ background: {BG}; }}
 QWidget#sidebar {{ background: {SURFACE}; border-right: 1px solid {BORDER}; }}
 QPushButton#nav {{

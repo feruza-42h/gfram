@@ -7,6 +7,7 @@ so the interface can show how the hybrid method reaches its decision. Matching,
 template protection and storage are the library's own code.
 """
 
+import contextlib
 import copy
 import json
 import logging
@@ -24,6 +25,27 @@ from . import STUDIO_HOME
 logger = logging.getLogger(__name__)
 
 STRICT_THRESHOLD_KEY = 'far_1e-3'   # ~0.1% false accepts on LFW
+
+
+@contextlib.contextmanager
+def _native_stderr_silenced():
+    """Redirect the process-level stderr (C++ libraries) to /dev/null; Python exceptions still propagate."""
+    import os
+    import sys
+    try:
+        sys.stderr.flush()
+        saved = os.dup(2)
+        devnull = os.open(os.devnull, os.O_WRONLY)
+    except OSError:
+        yield
+        return
+    os.dup2(devnull, 2)
+    try:
+        yield
+    finally:
+        os.dup2(saved, 2)
+        os.close(saved)
+        os.close(devnull)
 
 
 def _now() -> str:
@@ -57,16 +79,17 @@ class Engine:
 
     def warmup(self, progress=lambda msg: None):
         """Load every model once so the first real request is fast."""
-        progress('MediaPipe FaceMesh (478)…')
-        _ = self.rec.detector
-        progress('GeometricTransformer…')
-        _ = self.rec.embedder
-        progress('MobileFaceNet + adaptive fusion…')
-        _ = self.rec.hybrid
-        img = np.full((240, 240, 3), 128, np.uint8)
-        self.rec.detector.detect(img)
-        self.hybrid.appearance.embed(np.zeros((1, 112, 112, 3), np.uint8))
-        self.rec.embedder.embed(np.random.rand(478, 3).astype(np.float32))
+        with _native_stderr_silenced():      # MediaPipe / TFLite print C++ start-up notes to stderr
+            progress('MediaPipe FaceMesh (478)…')
+            _ = self.rec.detector
+            progress('GeometricTransformer…')
+            _ = self.rec.embedder
+            progress('MobileFaceNet + adaptive fusion…')
+            _ = self.rec.hybrid
+            img = np.full((240, 240, 3), 128, np.uint8)
+            self.rec.detector.detect(img)
+            self.hybrid.appearance.embed(np.zeros((1, 112, 112, 3), np.uint8))
+            self.rec.embedder.embed(np.random.rand(478, 3).astype(np.float32))
 
     @property
     def hybrid(self):

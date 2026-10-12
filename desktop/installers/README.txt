@@ -6,7 +6,11 @@ O'ZBEKCHA
 macOS
   1. Papkani kompyuterga nusxalang (USB yoki yuklab olish).
   2. "GFRAM-Studio-macOS.command" ni ikki marta bosing.
-     Agar macOS "noma'lum ishlab chiquvchi" desa: faylni o'ng tugma bilan bosing -> "Ochish" -> "Ochish".
+     Agar macOS '"...command" is damaged' yoki "noma'lum ishlab chiquvchi" desa (internet/Telegram/AirDrop
+     orqali kelgan imzosiz fayl):
+       Terminal ni oching, "zsh " deb yozing (oxirida bo'sh joy), shu faylni Terminal oynasiga
+       sudrab tashlang va Enter ni bosing.
+     yoki: "xattr -cr " deb yozing, GFRAM-Studio-Setup papkasini sudrab tashlang, Enter — keyin yana ikki marta bosing.
   3. Python bo'lmasa, o'zi o'rnatiladi (administrator paroli so'raladi).
   4. Kameraga ruxsat so'ralganda "Ruxsat berish" ni bosing.
   5. Ish stolida "GFRAM Studio" yorlig'i paydo bo'ladi — keyingi safar shuni bosing.
@@ -29,7 +33,10 @@ Qayta o'rnatish: o'rnatuvchini --reinstall bilan ishga tushiring.
 macOS
   1. Скопируйте папку на компьютер (флешка или загрузка).
   2. Дважды щёлкните "GFRAM-Studio-macOS.command".
-     Если macOS пишет "неустановленный разработчик": правый клик по файлу -> "Открыть" -> "Открыть".
+     Если macOS пишет '"...command" is damaged' или "неустановленный разработчик" (неподписанный файл,
+     пришедший через интернет/Telegram/AirDrop):
+       откройте Terminal, наберите "zsh " (с пробелом), перетащите этот файл в окно Terminal и нажмите Enter.
+     или: наберите "xattr -cr ", перетащите папку GFRAM-Studio-Setup, Enter — затем снова двойной щелчок.
   3. Если Python нет, он установится сам (будет запрошен пароль администратора).
   4. Когда спросит доступ к камере — нажмите "Разрешить".
   5. На рабочем столе появится ярлык "GFRAM Studio" — дальше запускайте его.
